@@ -5,6 +5,9 @@
 
 #include "shared.h"
 
+#define NUM_RECEIVERS 2
+uint8_t receiverAddresses[NUM_RECEIVERS][6]; // 6 bytes in a mac address
+
 msg data;
 
 esp_now_peer_info_t peerInfo;
@@ -22,6 +25,20 @@ void onDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
                                                 : "Delivery Fail");
 }
 
+void macAddressStrToBytes(const char *macStr, uint8_t *macBytes) {
+  for (int i = 0; i < 6; ++i) {
+    macBytes[i] = strtoul(macStr + 3 * i, nullptr, 16);
+  }
+}
+
+void registerPeer(uint8_t *receiverAddress) {
+  memcpy(peerInfo.peer_addr, receiverAddress, 6);
+  if (esp_now_add_peer(&peerInfo) != ESP_OK) {
+    Serial.print("Failed to add peer");
+    return;
+  }
+}
+
 void setup() {
   Serial.begin(9600);
 
@@ -37,19 +54,12 @@ void setup() {
   // register peer
   peerInfo.channel = 0;
   peerInfo.encrypt = false;
-  // register first peer
-  memcpy(peerInfo.peer_addr, receiverAddress1, 6);
-  if (esp_now_add_peer(&peerInfo) != ESP_OK) {
-    Serial.println("Failed to add peer");
-    return;
-  }
 
-  // register second peer
-  memcpy(peerInfo.peer_addr, receiverAddress2, 6);
-  if (esp_now_add_peer(&peerInfo) != ESP_OK) {
-    Serial.println("Failed to add peer");
-    return;
-  }
+  macAddressStrToBytes(receiverMacAddress1, receiverAddresses[0]);
+  macAddressStrToBytes(receiverMacAddress2, receiverAddresses[1]);
+
+  registerPeer(receiverAddresses[0]);
+  registerPeer(receiverAddresses[1]);
 }
 
 void loop() {

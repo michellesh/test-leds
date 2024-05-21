@@ -33,6 +33,29 @@ void setup() {
   // Once ESPNow is successfully Init, we will register for recv CB to
   // get recv packer info
   esp_now_register_recv_cb(onDataRecv);
+
+  byte boardNumber = getBoardNumber();
+
+  if (boardNumber == 1) {
+    // set up pin configuration for board 1
+  } else if (boardNumber == 2) {
+    // set up pin configuration for board 2
+  }
 }
 
 void loop() {}
+
+byte getBoardNumber() {
+  byte boardNumber = WiFi.macAddress() == receiverMacAddress1   ? 1
+                     : WiFi.macAddress() == receiverMacAddress2 ? 2
+                                                                : 0;
+  if (boardNumber == 0) {
+    Serial.print("MAC address not found: ");
+    Serial.println(WiFi.macAddress());
+  } else {
+    Serial.print("Board number: ");
+    Serial.println(boardNumber);
+  }
+
+  return boardNumber;
+}
